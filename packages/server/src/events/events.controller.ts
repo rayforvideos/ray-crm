@@ -2,12 +2,16 @@ import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/comm
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AppKeyGuard } from '../common/guards/app-key.guard';
-import { TrackDto, TrackBatchDto } from '../common/dto/sdk.dto';
+import { TrackDto, TrackBatchDto, ActionFeedbackDto } from '../common/dto/sdk.dto';
 import { App } from '../common/entities/app.entity';
+import { ActionLogService } from '../actions/action-log.service';
 
 @Controller('events')
 export class EventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private readonly actionLogService: ActionLogService,
+  ) {}
 
   @Post('track')
   @UseGuards(AppKeyGuard)
@@ -31,5 +35,11 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   findByUser(@Query('userId') userId: string, @Query('page') page?: string) {
     return this.eventsService.findByUser(userId, page ? parseInt(page) : 1);
+  }
+
+  @Post('feedback')
+  @UseGuards(AppKeyGuard)
+  feedback(@Body() dto: ActionFeedbackDto) {
+    return this.actionLogService.updateStatus(dto.actionLogId, dto.status);
   }
 }

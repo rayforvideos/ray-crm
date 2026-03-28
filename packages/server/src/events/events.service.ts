@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from '../common/entities/event.entity';
 import { UsersService } from '../users/users.service';
+import { TriggerEngineService } from '../trigger-engine/trigger-engine.service';
 
 @Injectable()
 export class EventsService {
@@ -10,6 +11,7 @@ export class EventsService {
     @InjectRepository(Event)
     private readonly eventRepo: Repository<Event>,
     private readonly usersService: UsersService,
+    private readonly triggerEngine: TriggerEngineService,
   ) {}
 
   async track(appId: string, externalId: string, name: string, properties?: Record<string, unknown>, timestamp?: string) {
@@ -23,7 +25,14 @@ export class EventsService {
       timestamp: timestamp ? new Date(timestamp) : new Date(),
     });
 
-    return this.eventRepo.save(event);
+    const saved = await this.eventRepo.save(event);
+
+    // Fire-and-forget trigger evaluation
+    this.triggerEngine.evaluate(saved, user).catch((err) => {
+      console.error('Trigger evaluation failed:', err);
+    });
+
+    return saved;
   }
 
   async trackBatch(appId: string, events: Array<{ externalId: string; name: string; properties?: Record<string, unknown>; timestamp?: string }>) {

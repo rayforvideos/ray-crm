@@ -7,6 +7,9 @@ import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
 import { SegmentsModule } from './segments/segments.module';
+import { SseModule } from './sse/sse.module';
+import { ActionsModule } from './actions/actions.module';
+import { TriggerEngineModule } from './trigger-engine/trigger-engine.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { SegmentsModule } from './segments/segments.module';
     EventsModule,
     CampaignsModule,
     SegmentsModule,
+    SseModule,
+    ActionsModule,
+    TriggerEngineModule,
   ],
 })
 export class AppModule {}
