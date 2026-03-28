@@ -13,11 +13,15 @@ export class RayCRM {
   private externalId: string | null = null;
   private userId: string | null = null;
 
+  private static readonly STORAGE_KEY_EXTERNAL_ID = 'ray_crm_ext_id';
+  private static readonly STORAGE_KEY_USER_ID = 'ray_crm_user_id';
+
   private constructor(private readonly config: RayCRMConfig) {
     this.transport = new Transport(config);
     this.batcher = new EventBatcher(this.transport);
     this.sseClient = new SseClient(config);
     this.anonymousId = this.getOrCreateAnonymousId();
+    this.restoreIdentity();
   }
 
   static init(config: RayCRMConfig): RayCRM {
@@ -33,6 +37,7 @@ export class RayCRM {
     });
 
     this.userId = user.id;
+    this.persistIdentity();
     this.startSse();
   }
 
@@ -64,6 +69,25 @@ export class RayCRM {
         this.transport.post('/events/feedback', { actionLogId, status }).catch(() => {});
       });
     });
+  }
+
+  private persistIdentity() {
+    try {
+      localStorage.setItem(RayCRM.STORAGE_KEY_EXTERNAL_ID, this.externalId!);
+      localStorage.setItem(RayCRM.STORAGE_KEY_USER_ID, this.userId!);
+    } catch { /* ignore */ }
+  }
+
+  private restoreIdentity() {
+    try {
+      const extId = localStorage.getItem(RayCRM.STORAGE_KEY_EXTERNAL_ID);
+      const userId = localStorage.getItem(RayCRM.STORAGE_KEY_USER_ID);
+      if (extId && userId) {
+        this.externalId = extId;
+        this.userId = userId;
+        this.startSse();
+      }
+    } catch { /* ignore */ }
   }
 
   private getOrCreateAnonymousId(): string {
