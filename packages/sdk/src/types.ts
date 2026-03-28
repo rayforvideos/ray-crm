@@ -1,6 +1,18 @@
+export interface ActionCallbacks {
+  dismiss: () => void;
+  click: (url?: string) => void;
+}
+
+export interface ActionRenderer {
+  toast: (config: ToastConfig, callbacks: ActionCallbacks) => void;
+  modal: (config: ModalConfig, callbacks: ActionCallbacks) => void;
+  banner: (config: BannerConfig, callbacks: ActionCallbacks) => void;
+}
+
 export interface RayCRMConfig {
   appKey: string;
   serverUrl: string;
+  renderer?: ActionRenderer;
 }
 
 export interface UserProperties {

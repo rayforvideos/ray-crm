@@ -1,14 +1,13 @@
-import type { RayCRMConfig, UserProperties, EventProperties, InappAction } from './types';
+import type { RayCRMConfig, UserProperties, EventProperties, InappAction, ActionRenderer } from './types';
 import { Transport } from './transport';
 import { EventBatcher } from './event-batcher';
 import { SseClient } from './sse-client';
-import { InappRenderer } from './renderer/renderer';
 
 export class RayCRM {
   private transport: Transport;
   private batcher: EventBatcher;
   private sseClient: SseClient;
-  private renderer: InappRenderer | null = null;
+  private renderer: ActionRenderer | null;
   private anonymousId: string;
   private externalId: string | null = null;
   private userId: string | null = null;
@@ -20,6 +19,7 @@ export class RayCRM {
     this.transport = new Transport(config);
     this.batcher = new EventBatcher(this.transport);
     this.sseClient = new SseClient(config);
+    this.renderer = config.renderer ?? null;
     this.anonymousId = this.getOrCreateAnonymousId();
     this.restoreIdentity();
   }
@@ -54,20 +54,40 @@ export class RayCRM {
   destroy() {
     this.batcher.destroy();
     this.sseClient.disconnect();
-    this.renderer?.destroy();
   }
 
   private startSse() {
     if (!this.userId) return;
 
-    if (!this.renderer) {
-      this.renderer = new InappRenderer();
-    }
-
     this.sseClient.connect(this.userId, (action: InappAction) => {
-      this.renderer!.render(action, (actionLogId, status) => {
-        this.transport.post('/events/feedback', { actionLogId, status }).catch(() => {});
-      });
+      if (!this.renderer) {
+        console.warn('[RayCRM] No renderer registered. Ignoring inapp action:', action.type);
+        return;
+      }
+
+      const feedback = (status: 'clicked' | 'dismissed') => {
+        this.transport.post('/events/feedback', { actionLogId: action.actionLogId, status }).catch(() => {});
+      };
+
+      const callbacks = {
+        dismiss: () => feedback('dismissed'),
+        click: (url?: string) => {
+          feedback('clicked');
+          if (url) window.open(url, '_blank');
+        },
+      };
+
+      switch (action.type) {
+        case 'inapp_toast':
+          this.renderer.toast(action.config as any, callbacks);
+          break;
+        case 'inapp_modal':
+          this.renderer.modal(action.config as any, callbacks);
+          break;
+        case 'inapp_banner':
+          this.renderer.banner(action.config as any, callbacks);
+          break;
+      }
     });
   }
 

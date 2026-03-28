@@ -3,6 +3,8 @@ export type {
   RayCRMConfig,
   UserProperties,
   EventProperties,
+  ActionRenderer,
+  ActionCallbacks,
   ToastConfig,
   ModalConfig,
   BannerConfig,
