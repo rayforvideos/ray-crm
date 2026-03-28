@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/comm
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AppKeyGuard } from '../common/guards/app-key.guard';
-import { TrackDto, TrackBatchDto, ActionFeedbackDto } from '../common/dto/sdk.dto';
+import { TrackDto, TrackBatchDto, ActionFeedbackDto, CreateActionLogDto } from '../common/dto/sdk.dto';
 import { App } from '../common/entities/app.entity';
 import { ActionLogService } from '../actions/action-log.service';
 
@@ -35,6 +35,18 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   findByUser(@Query('userId') userId: string, @Query('page') page?: string) {
     return this.eventsService.findByUser(userId, page ? parseInt(page) : 1);
+  }
+
+  @Post('action-log')
+  @UseGuards(AppKeyGuard)
+  createActionLog(@Body() dto: CreateActionLogDto) {
+    return this.actionLogService.create({
+      campaignId: dto.campaignId,
+      actionId: dto.actionId,
+      userId: dto.userId,
+      actionType: dto.actionType as any,
+      status: 'sent',
+    });
   }
 
   @Post('feedback')

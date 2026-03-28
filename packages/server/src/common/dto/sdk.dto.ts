@@ -39,3 +39,17 @@ export class ActionFeedbackDto {
   @IsString()
   status!: 'clicked' | 'dismissed';
 }
+
+export class CreateActionLogDto {
+  @IsString()
+  campaignId!: string;
+
+  @IsString()
+  actionId!: string;
+
+  @IsString()
+  userId!: string;
+
+  @IsString()
+  actionType!: string;
+}

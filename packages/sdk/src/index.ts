@@ -8,4 +8,7 @@ export type {
   ToastConfig,
   ModalConfig,
   BannerConfig,
+  CampaignRule,
+  CampaignRuleTrigger,
+  CampaignRuleAction,
 } from './types';

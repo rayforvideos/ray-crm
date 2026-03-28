@@ -47,7 +47,12 @@ export class TriggerEngineService {
         eventProperties: event.properties,
       };
 
-      for (const action of campaign.actions) {
+      // Inapp actions are handled client-side by the SDK
+      const serverActions = campaign.actions.filter(
+        (a) => !a.type.startsWith('inapp_'),
+      );
+
+      for (const action of serverActions) {
         try {
           await this.actionsService.dispatch(action, ctx);
         } catch (err) {

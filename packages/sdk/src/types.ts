@@ -49,3 +49,21 @@ export interface BannerConfig {
   position: 'top' | 'bottom';
   dismissible: boolean;
 }
+
+export interface CampaignRule {
+  id: string;
+  triggers: CampaignRuleTrigger[];
+  actions: CampaignRuleAction[];
+}
+
+export interface CampaignRuleTrigger {
+  type: 'event' | 'segment';
+  eventName?: string;
+  eventConditions?: Record<string, unknown>;
+}
+
+export interface CampaignRuleAction {
+  id: string;
+  type: InappAction['type'];
+  config: ToastConfig | ModalConfig | BannerConfig;
+}

@@ -5,12 +5,14 @@
 ## Architecture
 
 ```
-[클라이언트 웹] ←→ [SDK] ←REST/SSE→ [CRM Server (NestJS)]
-                                           ├── PostgreSQL
-                                           └── Redis
+[클라이언트 웹] ←→ [SDK] ←REST→ [CRM Server (NestJS)]
+                                       ├── PostgreSQL
+                                       └── Redis
 
 [대시보드 (React SPA)] ←REST→ [CRM Server]
 ```
+
+SDK는 페이지 로드 시 캠페인 룰을 fetch하여 로컬에서 매칭합니다. 인앱 액션(토스트/모달/배너)은 서버 왕복 없이 즉시 렌더되며, 이벤트 로깅은 비동기 POST로 처리합니다.
 
 ## Getting Started
 
@@ -40,10 +42,10 @@ const crm = RayCRM.init({
   }
 })
 
-// 유저 식별 (최초 1회, 이후 자동 복원)
+// 유저 식별 → 캠페인 룰 자동 fetch (최초 1회, 이후 자동 복원)
 await crm.identify('user-123', { name: '홍길동' })
 
-// 이벤트 전송
+// 이벤트 전송 → 로컬 룰 매칭 → 인앱 액션 즉시 렌더
 crm.track('page_view', { path: '/pricing' })
 crm.track('purchase', { amount: 29000 })
 ```
@@ -52,6 +54,6 @@ crm.track('purchase', { amount: 29000 })
 
 | 채널 | 전달 방식 | 상태 |
 |------|-----------|------|
-| 인앱 (토스트/모달/배너) | SSE | 구현 완료 |
+| 인앱 (토스트/모달/배너) | SDK 로컬 매칭 | 구현 완료 |
 | 웹훅 | HTTP | 구현 완료 |
 | 카카오 채널 | 외부 API | 구조만 |

@@ -95,6 +95,19 @@ export class CampaignsService {
       .getMany();
   }
 
+  findActiveInappRules(appId: string) {
+    return this.campaignRepo
+      .createQueryBuilder('campaign')
+      .innerJoinAndSelect('campaign.triggers', 'trigger')
+      .innerJoinAndSelect('campaign.actions', 'action')
+      .where('campaign.appId = :appId', { appId })
+      .andWhere('campaign.status = :status', { status: 'active' })
+      .andWhere('action.type IN (:...types)', {
+        types: ['inapp_toast', 'inapp_modal', 'inapp_banner'],
+      })
+      .getMany();
+  }
+
   findActiveBySegment(appId: string) {
     return this.campaignRepo
       .createQueryBuilder('campaign')

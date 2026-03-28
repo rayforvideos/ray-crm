@@ -1,12 +1,12 @@
-import type { RayCRMConfig, UserProperties, EventProperties, InappAction, ActionRenderer } from './types';
+import type { RayCRMConfig, UserProperties, EventProperties, ActionRenderer } from './types';
 import { Transport } from './transport';
 import { EventBatcher } from './event-batcher';
-import { SseClient } from './sse-client';
+import { CampaignEngine } from './campaign-engine';
 
 export class RayCRM {
   private transport: Transport;
   private batcher: EventBatcher;
-  private sseClient: SseClient;
+  private campaignEngine: CampaignEngine;
   private renderer: ActionRenderer | null;
   private anonymousId: string;
   private externalId: string | null = null;
@@ -18,8 +18,12 @@ export class RayCRM {
   private constructor(private readonly config: RayCRMConfig) {
     this.transport = new Transport(config);
     this.batcher = new EventBatcher(this.transport);
-    this.sseClient = new SseClient(config);
     this.renderer = config.renderer ?? null;
+    this.campaignEngine = new CampaignEngine(
+      this.transport,
+      () => this.renderer,
+      () => this.userId,
+    );
     this.anonymousId = this.getOrCreateAnonymousId();
     this.restoreIdentity();
   }
@@ -38,7 +42,7 @@ export class RayCRM {
 
     this.userId = user.id;
     this.persistIdentity();
-    this.startSse();
+    this.campaignEngine.fetchRules().catch(() => {});
   }
 
   track(eventName: string, properties?: EventProperties) {
@@ -49,46 +53,13 @@ export class RayCRM {
       properties,
       timestamp: new Date().toISOString(),
     });
+
+    // Local rule matching — render inapp actions immediately
+    this.campaignEngine.evaluate(eventName, properties as Record<string, unknown>);
   }
 
   destroy() {
     this.batcher.destroy();
-    this.sseClient.disconnect();
-  }
-
-  private startSse() {
-    if (!this.userId) return;
-
-    this.sseClient.connect(this.userId, (action: InappAction) => {
-      if (!this.renderer) {
-        console.warn('[RayCRM] No renderer registered. Ignoring inapp action:', action.type);
-        return;
-      }
-
-      const feedback = (status: 'clicked' | 'dismissed') => {
-        this.transport.post('/events/feedback', { actionLogId: action.actionLogId, status }).catch(() => {});
-      };
-
-      const callbacks = {
-        dismiss: () => feedback('dismissed'),
-        click: (url?: string) => {
-          feedback('clicked');
-          if (url) window.open(url, '_blank');
-        },
-      };
-
-      switch (action.type) {
-        case 'inapp_toast':
-          this.renderer.toast(action.config as any, callbacks);
-          break;
-        case 'inapp_modal':
-          this.renderer.modal(action.config as any, callbacks);
-          break;
-        case 'inapp_banner':
-          this.renderer.banner(action.config as any, callbacks);
-          break;
-      }
-    });
   }
 
   private persistIdentity() {
@@ -105,7 +76,7 @@ export class RayCRM {
       if (extId && userId) {
         this.externalId = extId;
         this.userId = userId;
-        this.startSse();
+        this.campaignEngine.fetchRules().catch(() => {});
       }
     } catch { /* ignore */ }
   }
