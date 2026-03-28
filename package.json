@@ -1,0 +1,20 @@
+{
+  "name": "ray-crm",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:server": "turbo run dev --filter=@ray-crm/server",
+    "dev:dashboard": "turbo run dev --filter=@ray-crm/dashboard",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.15.4"
+}
