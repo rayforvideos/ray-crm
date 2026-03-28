@@ -25,12 +25,19 @@ pnpm dev:dashboard  # http://localhost:5173
 
 ## SDK
 
+SDK는 렌더링을 직접 하지 않고, 호스트 앱의 디자인 시스템 컴포넌트에 위임합니다.
+
 ```js
 import { RayCRM } from '@ray-crm/sdk'
 
 const crm = RayCRM.init({
   appKey: 'your-app-key',
-  serverUrl: 'https://crm-api.example.com'
+  serverUrl: 'https://crm-api.example.com',
+  renderer: {
+    toast: (config, { dismiss }) => { /* 디자인 시스템 Toast 사용 */ },
+    modal: (config, { dismiss, click }) => { /* 디자인 시스템 Modal 사용 */ },
+    banner: (config, { dismiss, click }) => { /* 디자인 시스템 Banner 사용 */ },
+  }
 })
 
 // 유저 식별 (최초 1회, 이후 자동 복원)
