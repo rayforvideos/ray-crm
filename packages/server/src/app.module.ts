@@ -1,6 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { AppsModule } from './apps/apps.module';
+import { UsersModule } from './users/users.module';
+import { EventsModule } from './events/events.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
+import { SegmentsModule } from './segments/segments.module';
 
 @Module({
   imports: [
@@ -18,6 +24,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         synchronize: true,
       }),
     }),
+    AuthModule,
+    AppsModule,
+    UsersModule,
+    EventsModule,
+    CampaignsModule,
+    SegmentsModule,
   ],
 })
 export class AppModule {}
